@@ -14,8 +14,8 @@
 
 import { hookup } from "westend-helpers/src/actor/Actor.js";
 
-import BroadcastActor from "./actors/broadcast.js";
+import PubSubActor from "./actors/pubsub.js";
 import StateActor from "./actors/state.js";
 
-hookup("broadcast", new BroadcastActor());
+hookup("pubsub", new PubSubActor());
 hookup("state", new StateActor());

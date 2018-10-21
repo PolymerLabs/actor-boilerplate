@@ -16,10 +16,7 @@ import { applyPatches } from "immer";
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
 
-import {
-  BroadcastMessage,
-  MessageType as BroadcastMessageType
-} from "./broadcast.js";
+import { MessageType as PubSubMessageType, PublishMessage } from "./pubsub.js";
 import { defaultState, State } from "./state.js";
 
 declare global {
@@ -28,11 +25,11 @@ declare global {
   }
 }
 
-export type Message = BroadcastMessage;
+export type Message = PublishMessage;
 
 export default class UiActor extends Actor<Message> {
   private state: State = defaultState;
-  private broadcastActor?: ActorHandle<"broadcast">;
+  private pubsubActor?: ActorHandle<"pubsub">;
 
   private checks = [
     (oldState: State, newState: State) => oldState === newState,
@@ -43,11 +40,11 @@ export default class UiActor extends Actor<Message> {
   ];
 
   async init() {
-    this.broadcastActor = await lookup("broadcast");
-    this.broadcastActor!.send({
+    this.pubsubActor = await lookup("pubsub");
+    this.pubsubActor!.send({
       actorName: "ui",
       topic: "state",
-      type: BroadcastMessageType.SUBSCRIBE
+      type: PubSubMessageType.SUBSCRIBE
     });
   }
 
