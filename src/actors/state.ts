@@ -12,7 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import produce from "immer";
+import { produce } from "immer";
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
 import {
@@ -20,52 +20,54 @@ import {
   MessageType as PubSubMessageType
 } from "./pubsub.js";
 
+import { Todo } from "../types.js";
+
 declare global {
   interface MessageBusType {
     state: Message;
-    "state.update": PubSubMessage;
+    "state.pubsub": PubSubMessage;
   }
 }
-export interface Message {}
 
-export interface State {
-  userSettings: {
-    volume: number;
-    brightness: number;
-  };
-  counter: number;
-  name: string;
+enum MessageType {
+  CREATE_TODO,
+  DELETE_TODO,
+  TOGGLE_TODO
 }
 
-export const defaultState = {
-  counter: 0,
-  name: "Surma",
-  userSettings: {
-    brightness: 50,
-    volume: 90
-  }
-};
+export interface CreateMessage {
+  type: MessageType.CREATE_TODO;
+  title: string;
+}
+
+export interface DeleteMessage {
+  type: MessageType.DELETE_TODO;
+  uid: string;
+}
+
+export interface ToggleMessage {
+  type: MessageType.TOGGLE_TODO;
+  uid: string;
+}
+
+export type Message = CreateMessage | DeleteMessage | ToggleMessage;
+
+export type State = Todo[];
+
+export const defaultState = [];
 
 export default class StateActor extends Actor<Message> {
-  private pubsubActor?: ActorHandle<"state.update">;
-  private state: State = defaultState;
+  private statePubSub?: ActorHandle<"state.pubsub">;
+  private state: State = [];
 
   async init() {
-    this.pubsubActor = await lookup("state.update");
+    this.statePubSub = await lookup("state.pubsub");
     setInterval(() => {
-      this.state = produce(
-        this.state,
-        draft => {
-          draft.counter++;
-        },
-        patches => {
-          this.pubsubActor!.send({
-            payload: patches,
-            sourceActorName: "state",
-            type: PubSubMessageType.PUBLISH
-          });
-        }
-      );
+      this.statePubSub!.send({
+        payload: [],
+        sourceActorName: "state",
+        type: PubSubMessageType.PUBLISH
+      });
     }, 1000);
   }
 

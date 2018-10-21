@@ -18,4 +18,4 @@ import PubSubActor from "./actors/pubsub.js";
 import StateActor from "./actors/state.js";
 
 hookup("state", new StateActor());
-hookup("state.update", new PubSubActor());
+hookup("state.pubsub", new PubSubActor());
