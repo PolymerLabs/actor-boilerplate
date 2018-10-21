@@ -37,6 +37,7 @@ export default class UiActor extends Actor<Message> {
   private checks = [
     (oldState: State, newState: State) => oldState === newState,
     (oldState: State, newState: State) => oldState.counter === newState.counter,
+    (oldState: State, newState: State) => oldState.name === newState.name,
     (oldState: State, newState: State) =>
       oldState.userSettings === newState.userSettings
   ];
@@ -55,7 +56,9 @@ export default class UiActor extends Actor<Message> {
 
     document.body.innerHTML = `
 <pre>
-Counter: ${this.state.counter}
+State:
+
+${JSON.stringify(newState, null, "  ")}
 
 Test if state subobjects are unchanged:
 =======================================
