@@ -17,6 +17,12 @@ import { applyPatches } from "immer";
 import { h, render } from "preact";
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
+import {
+  isResponse,
+  processResponse,
+  sendRequest
+} from "../../../utils/request-response.js";
+import { MessageType as MathMessageType } from "../../math-service.js";
 
 import {
   MessageType as PubSubMessageType,
@@ -36,6 +42,7 @@ export default class PreactAdapter extends Actor<Message> {
   private state: State = defaultState;
   private stateActor?: ActorHandle<"state">;
   private pubsubActor?: ActorHandle<"state.pubsub">;
+  private lastResult?: number;
 
   async init() {
     this.stateActor = await lookup("state");
@@ -48,9 +55,31 @@ export default class PreactAdapter extends Actor<Message> {
     });
   }
 
+  async doMath() {
+    const math = await lookup("math");
+    const response = await sendRequest(math, {
+      a: 40,
+      b: 2 * Math.random(),
+      requester: "ui",
+      type: MathMessageType.DO_MATH
+    });
+    this.lastResult = response.result;
+  }
+
   async onMessage(msg: Message) {
+    if (isResponse(msg) && processResponse(msg)) {
+      return;
+    }
     this.state = applyPatches(this.state, msg.payload as any);
 
-    render(<h1>Hai</h1>, document.body, document.body.firstChild as any);
+    render(
+      <main>
+        <h1>Hai</h1>
+        <button onClick={() => this.doMath()}>Do Math!</button>
+        <div>Last result: {this.lastResult || "No result yet"}</div>
+      </main>,
+      document.body,
+      document.body.firstChild as any
+    );
   }
 }
