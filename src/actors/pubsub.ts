@@ -14,12 +14,6 @@
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
 
-declare global {
-  interface MessageBusType {
-    pubsub: Message;
-  }
-}
-
 export enum MessageType {
   SUBSCRIBE,
   PUBLISH
@@ -27,14 +21,12 @@ export enum MessageType {
 
 export interface SubscribeMessage {
   type: MessageType.SUBSCRIBE;
-  topic: string;
   actorName: string;
 }
 
 export interface PublishMessage {
   type: MessageType.PUBLISH;
   sourceActorName?: string;
-  topic: string;
   payload: {};
 }
 
@@ -46,7 +38,7 @@ interface Subscriber {
 }
 
 export default class PubSubActor extends Actor<Message> {
-  subscribers = new Map<string, Subscriber[]>();
+  subscribers: Subscriber[] = [];
 
   async init(): Promise<void> {
     // lol
@@ -57,18 +49,15 @@ export default class PubSubActor extends Actor<Message> {
       case MessageType.SUBSCRIBE:
         {
           const handle = await lookup(msg.actorName as any);
-          const subscribers = this.subscribers.get(msg.topic) || [];
-          subscribers.push({
+          this.subscribers.push({
             handle,
             name: msg.actorName
           });
-          this.subscribers.set(msg.topic, subscribers);
         }
         break;
       case MessageType.PUBLISH:
         {
-          const subscribers = this.subscribers.get(msg.topic) || [];
-          for (const { name, handle } of subscribers) {
+          for (const { name, handle } of this.subscribers) {
             if (name === msg.sourceActorName) {
               continue;
             }

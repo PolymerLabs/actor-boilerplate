@@ -17,5 +17,5 @@ import { hookup } from "westend-helpers/src/actor/Actor.js";
 import PubSubActor from "./actors/pubsub.js";
 import StateActor from "./actors/state.js";
 
-hookup("pubsub", new PubSubActor());
 hookup("state", new StateActor());
+hookup("state.update", new PubSubActor());

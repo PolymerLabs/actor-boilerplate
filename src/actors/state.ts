@@ -15,11 +15,15 @@
 import produce from "immer";
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
-import { MessageType as PubSubMessageType } from "./pubsub.js";
+import {
+  Message as PubSubMessage,
+  MessageType as PubSubMessageType
+} from "./pubsub.js";
 
 declare global {
   interface MessageBusType {
     state: Message;
+    "state.update": PubSubMessage;
   }
 }
 export interface Message {}
@@ -43,11 +47,11 @@ export const defaultState = {
 };
 
 export default class StateActor extends Actor<Message> {
-  private broadcastActor?: ActorHandle<"pubsub">;
+  private pubsubActor?: ActorHandle<"state.update">;
   private state: State = defaultState;
 
   async init() {
-    this.broadcastActor = await lookup("pubsub");
+    this.pubsubActor = await lookup("state.update");
     setInterval(() => {
       this.state = produce(
         this.state,
@@ -55,10 +59,9 @@ export default class StateActor extends Actor<Message> {
           draft.counter++;
         },
         patches => {
-          this.broadcastActor!.send({
+          this.pubsubActor!.send({
             payload: patches,
             sourceActorName: "state",
-            topic: "state",
             type: PubSubMessageType.PUBLISH
           });
         }

@@ -29,7 +29,7 @@ export type Message = PublishMessage;
 
 export default class UiActor extends Actor<Message> {
   private state: State = defaultState;
-  private pubsubActor?: ActorHandle<"pubsub">;
+  private pubsubActor?: ActorHandle<"state.update">;
 
   private checks = [
     (oldState: State, newState: State) => oldState === newState,
@@ -40,10 +40,9 @@ export default class UiActor extends Actor<Message> {
   ];
 
   async init() {
-    this.pubsubActor = await lookup("pubsub");
+    this.pubsubActor = await lookup("state.update");
     this.pubsubActor!.send({
       actorName: "ui",
-      topic: "state",
       type: PubSubMessageType.SUBSCRIBE
     });
   }
