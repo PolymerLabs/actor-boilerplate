@@ -104,16 +104,32 @@ export default class StateActor extends Actor<Message> {
           uid: generateUniqueId()
         });
       },
-      (patches: Patch[]) =>
+      (patches: Patch[]) => {
         this.pubsub.send({
           payload: patches,
           type: PubSubMessageType.PUBLISH
-        })
+        });
+      }
     );
   }
 
   async [MessageType.DELETE_TODO](msg: DeleteMessage) {
-    // TODO
+    this.state = produce<State>(
+      this.state,
+      draft => {
+        const idx = draft.items.findIndex(item => item.uid !== msg.uid);
+        if (idx === -1) {
+          return;
+        }
+        draft.items.splice(idx, 1);
+      },
+      (patches: Patch[]) => {
+        this.pubsub.send({
+          payload: patches,
+          type: PubSubMessageType.PUBLISH
+        });
+      }
+    );
   }
 
   async [MessageType.REQUEST_STATE](msg: RequestStateMessage) {
@@ -123,6 +139,21 @@ export default class StateActor extends Actor<Message> {
   }
 
   async [MessageType.TOGGLE_TODO](msg: ToggleMessage) {
-    // TODO
+    this.state = produce<State>(
+      this.state,
+      draft => {
+        const item = draft.items.find(item => item.uid === msg.uid);
+        if (!item) {
+          return;
+        }
+        item.done = !item.done;
+      },
+      (patches: Patch[]) => {
+        this.pubsub.send({
+          payload: patches,
+          type: PubSubMessageType.PUBLISH
+        });
+      }
+    );
   }
 }

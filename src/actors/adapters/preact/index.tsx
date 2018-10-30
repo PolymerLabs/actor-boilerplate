@@ -77,26 +77,57 @@ export default class PreactAdapter extends Actor<Message> {
 
   private render(state: State) {
     render(
-      <main>
+      <main onChange={e => this.toggleItem(e)}>
         {state.items.map(item => (
           <label data-uid={item.uid}>
             <input type="checkbox" checked={item.done} />
-            <input type="text" value={item.title} />
+            {item.title}
+            <button onClick={e => this.deleteItem(e)}>-</button>
           </label>
         ))}
-        <button
-          onClick={() =>
-            this.stateActor.send({
-              title: "Give me a text!",
-              type: StateMessageType.CREATE_TODO
-            })
-          }
-        >
-          =
-        </button>
+        <input type="text" id="new" />
+        <button onClick={() => this.newItem()}>+</button>
       </main>,
       document.body,
       document.body.firstChild as any
     );
+  }
+
+  private deleteItem(e: Event) {
+    const label = (e.target as HTMLElement).closest("label");
+    if (!label) {
+      return;
+    }
+    const uid = label.dataset.uid!;
+    if (!uid) {
+      return;
+    }
+    this.stateActor.send({
+      type: StateMessageType.DELETE_TODO,
+      uid
+    });
+  }
+
+  private toggleItem(e: Event) {
+    const label = (e.target as HTMLElement).closest("label");
+    if (!label) {
+      return;
+    }
+    const uid = label.dataset.uid!;
+    if (!uid) {
+      return;
+    }
+    this.stateActor.send({
+      type: StateMessageType.TOGGLE_TODO,
+      uid
+    });
+  }
+
+  private newItem() {
+    const title = (document.querySelector("#new")! as HTMLInputElement).value;
+    this.stateActor.send({
+      title,
+      type: StateMessageType.CREATE_TODO
+    });
   }
 }
