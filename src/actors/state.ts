@@ -23,7 +23,7 @@ import {
 import { Todo } from "../types.js";
 
 declare global {
-  interface MessageBusType {
+  interface ActorMessageType {
     state: Message;
     "state.pubsub": PubSubMessage;
   }
@@ -57,13 +57,12 @@ export type State = Todo[];
 export const defaultState = [];
 
 export default class StateActor extends Actor<Message> {
-  private statePubSub?: ActorHandle<"state.pubsub">;
+  private statePubSub = lookup("state.pubsub");
   private state: State = [];
 
   async init() {
-    this.statePubSub = await lookup("state.pubsub");
     setInterval(() => {
-      this.statePubSub!.send({
+      this.statePubSub.send({
         payload: [],
         sourceActorName: "state",
         type: PubSubMessageType.PUBLISH

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "copy-static": "cp -r static/* dist",
+    "copy-static": "cpx static/**/ dist/",
     "gzip": "gzip -k9nr dist",
     "build": "rollup -c && npm run copy-static && npm run gzip",
     "serve": "http-server dist -c0 -g",
@@ -23,6 +23,7 @@
   "author": "Surma <surma@surma.link>",
   "license": "Apache-2.0",
   "dependencies": {
+    "cpx": "^1.5.0",
     "idb-keyval": "^3.1.0",
     "immer": "^1.7.2",
     "preact": "^8.3.1",

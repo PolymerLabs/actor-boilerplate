@@ -19,7 +19,7 @@ import { Actor, lookup } from "westend-helpers/src/actor/Actor.js";
 import { get, set } from "idb-keyval";
 
 declare global {
-  interface MessageBusType {
+  interface ActorMessageType {
     storage: Message;
   }
 }
@@ -49,23 +49,20 @@ export default class StorageActor extends Actor<Message> {
   }
 
   async onMessage(msg: Message) {
-    switch (msg.type) {
-      case MessageType.LOAD:
-        {
-          const todos = (await get("todos")) as Todo[];
-          const handle = await lookup(msg.handle as any);
-          handle.send({
-            payload: todos,
-            type: MessageType.REPLY,
-            uid: msg.uid
-          });
-        }
-        break;
-      case MessageType.SAVE:
-        {
-          await set("todos", msg.payload);
-        }
-        break;
-    }
+    this[msg.type](msg);
+  }
+
+  async [MessageType.LOAD](msg: LoadMessage) {
+    const todos = (await get("todos")) as Todo[];
+    const handle = lookup(msg.handle as any);
+    handle.send({
+      payload: todos,
+      type: MessageType.REPLY,
+      uid: msg.uid
+    });
+  }
+
+  async [MessageType.SAVE](msg: SaveMessage) {
+    await set("todos", msg.payload);
   }
 }

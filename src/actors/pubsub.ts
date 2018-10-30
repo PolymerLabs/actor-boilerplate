@@ -40,31 +40,25 @@ interface Subscriber {
 export default class PubSubActor extends Actor<Message> {
   subscribers: Subscriber[] = [];
 
-  async init(): Promise<void> {
-    // lol
+  async onMessage(msg: Message) {
+    // @ts-ignore
+    this[msg.type](msg);
   }
 
-  async onMessage(msg: Message) {
-    switch (msg.type) {
-      case MessageType.SUBSCRIBE:
-        {
-          const handle = await lookup(msg.actorName as any);
-          this.subscribers.push({
-            handle,
-            name: msg.actorName
-          });
-        }
-        break;
-      case MessageType.PUBLISH:
-        {
-          for (const { name, handle } of this.subscribers) {
-            if (name === msg.sourceActorName) {
-              continue;
-            }
-            handle.send(msg);
-          }
-        }
-        break;
+  async [MessageType.SUBSCRIBE](msg: SubscribeMessage) {
+    const handle = lookup(msg.actorName as any);
+    this.subscribers.push({
+      handle,
+      name: msg.actorName
+    });
+  }
+
+  async [MessageType.PUBLISH](msg: PublishMessage) {
+    for (const { name, handle } of this.subscribers) {
+      if (name === msg.sourceActorName) {
+        continue;
+      }
+      handle.send(msg);
     }
   }
 }
