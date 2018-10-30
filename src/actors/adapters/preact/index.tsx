@@ -29,7 +29,8 @@ import {
 import {
   defaultState,
   MessageType as StateMessageType,
-  State
+  State,
+  StateMessage
 } from "../../state.js";
 
 declare global {
@@ -52,14 +53,7 @@ export default class PreactAdapter extends Actor<Message> {
       type: PubSubMessageType.SUBSCRIBE
     });
 
-    (async () => {
-      const response = await sendRequest(this.stateActor, {
-        requester: this.actorName!,
-        type: StateMessageType.REQUEST_STATE
-      });
-      this.state = response.state;
-      this.render(this.state);
-    })();
+    this.loadState();
   }
 
   async onMessage(msg: Message) {
@@ -129,5 +123,14 @@ export default class PreactAdapter extends Actor<Message> {
       title,
       type: StateMessageType.CREATE_TODO
     });
+  }
+
+  private async loadState() {
+    const response = (await sendRequest(this.stateActor, {
+      requester: this.actorName!,
+      type: StateMessageType.REQUEST_STATE
+    })) as StateMessage;
+    this.state = response.state;
+    this.render(this.state);
   }
 }

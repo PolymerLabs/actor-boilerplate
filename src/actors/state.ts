@@ -17,14 +17,20 @@ import { Patch, produce } from "immer";
 import { Actor, lookup } from "westend-helpers/src/actor/Actor.js";
 import {
   generateUniqueId,
+  processResponse,
   Request,
   Response,
+  sendRequest,
   sendResponse
 } from "../utils/request-response.js";
 import {
   Message as PubSubMessage,
   MessageType as PubSubMessageType
 } from "./pubsub.js";
+import {
+  LoadResponseMessage,
+  MessageType as StorageMessageType
+} from "./storage.js";
 
 import { Todo } from "../types.js";
 
@@ -75,7 +81,8 @@ export type Message =
   | CreateMessage
   | DeleteMessage
   | ToggleMessage
-  | RequestStateMessage;
+  | RequestStateMessage
+  | LoadResponseMessage;
 
 export interface State {
   items: Todo[];
@@ -86,10 +93,30 @@ export const defaultState: State = {
 };
 
 export default class StateActor extends Actor<Message> {
+  private storage = lookup("storage");
   private pubsub = lookup("state.pubsub");
-  private state: State = defaultState;
+  private _state: State = defaultState;
+
+  get state() {
+    return this._state;
+  }
+
+  set state(val) {
+    this._state = val;
+    this.storage.send({
+      todos: this._state.items,
+      type: StorageMessageType.SAVE
+    });
+  }
+
+  async init() {
+    this.loadState();
+  }
 
   async onMessage(msg: Message) {
+    if (processResponse(msg)) {
+      return;
+    }
     // @ts-ignore
     this[msg.type](msg);
   }
@@ -104,12 +131,7 @@ export default class StateActor extends Actor<Message> {
           uid: generateUniqueId()
         });
       },
-      (patches: Patch[]) => {
-        this.pubsub.send({
-          payload: patches,
-          type: PubSubMessageType.PUBLISH
-        });
-      }
+      p => this.sendPatches(p)
     );
   }
 
@@ -117,18 +139,13 @@ export default class StateActor extends Actor<Message> {
     this.state = produce<State>(
       this.state,
       draft => {
-        const idx = draft.items.findIndex(item => item.uid !== msg.uid);
+        const idx = draft.items.findIndex(item => item.uid === msg.uid);
         if (idx === -1) {
           return;
         }
         draft.items.splice(idx, 1);
       },
-      (patches: Patch[]) => {
-        this.pubsub.send({
-          payload: patches,
-          type: PubSubMessageType.PUBLISH
-        });
-      }
+      p => this.sendPatches(p)
     );
   }
 
@@ -148,12 +165,28 @@ export default class StateActor extends Actor<Message> {
         }
         item.done = !item.done;
       },
-      (patches: Patch[]) => {
-        this.pubsub.send({
-          payload: patches,
-          type: PubSubMessageType.PUBLISH
-        });
-      }
+      p => this.sendPatches(p)
+    );
+  }
+
+  private sendPatches(patches: Patch[]) {
+    this.pubsub.send({
+      payload: patches,
+      type: PubSubMessageType.PUBLISH
+    });
+  }
+
+  private async loadState() {
+    const response = await sendRequest(this.storage, {
+      requester: this.actorName!,
+      type: StorageMessageType.LOAD_REQUEST
+    });
+    this.state = produce<State>(
+      this.state,
+      draft => {
+        draft.items = (response as LoadResponseMessage).todos;
+      },
+      p => this.sendPatches(p)
     );
   }
 }

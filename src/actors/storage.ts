@@ -12,58 +12,62 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { Todo } from "../types.js";
-
-import { Actor, lookup } from "westend-helpers/src/actor/Actor.js";
-
 import { get, set } from "idb-keyval";
+
+import { Actor } from "westend-helpers/src/actor/Actor.js";
+
+import { Request, Response, sendResponse } from "../utils/request-response.js";
+
+import { Todo } from "../types.js";
 
 declare global {
   interface ActorMessageType {
     storage: Message;
   }
+  interface RequestNameMap {
+    LoadRequestMessage: LoadRequestMessage;
+  }
+  interface RequestNameResponsePairs {
+    LoadRequestMessage: LoadResponseMessage;
+  }
 }
 
 export enum MessageType {
   SAVE,
-  LOAD,
-  REPLY
+  LOAD_REQUEST,
+  LOAD_RESPONSE
 }
 
 export interface SaveMessage {
   type: MessageType.SAVE;
-  payload: Todo[];
+  todos: Todo[];
 }
 
-export interface LoadMessage {
-  type: MessageType.LOAD;
-  uid: string;
-  handle: string;
-  payload: Todo[];
-}
+export type LoadRequestMessage = {
+  type: MessageType.LOAD_REQUEST;
+} & Request;
 
-export type Message = SaveMessage | LoadMessage;
+export type LoadResponseMessage = {
+  type: MessageType.LOAD_RESPONSE;
+  todos: Todo[];
+} & Response;
+
+export type Message = SaveMessage | LoadRequestMessage;
 
 export default class StorageActor extends Actor<Message> {
-  async init() {
-    // Nothing.
-  }
-
   async onMessage(msg: Message) {
+    // @ts-ignore
     this[msg.type](msg);
   }
 
-  async [MessageType.LOAD](msg: LoadMessage) {
+  async [MessageType.LOAD_REQUEST](msg: LoadRequestMessage) {
     const todos = (await get("todos")) as Todo[];
-    const handle = lookup(msg.handle as any);
-    handle.send({
-      payload: todos,
-      type: MessageType.REPLY,
-      uid: msg.uid
+    sendResponse(msg, {
+      todos: todos || []
     });
   }
 
   async [MessageType.SAVE](msg: SaveMessage) {
-    await set("todos", msg.payload);
+    await set("todos", msg.todos);
   }
 }
