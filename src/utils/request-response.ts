@@ -12,22 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
-import { ValidMessageBusName } from "westend-helpers/src/message-bus/MessageBus.js";
-
-export type ValidActorName = ValidMessageBusName;
-
-export type RequestId = string;
-
-function generateUniqueRequestId(): RequestId {
-  return [...new Array(16)]
-    .map(() => Math.floor(Math.random() * 16).toString(16))
-    .join("");
-}
-export interface Request {
-  requester: string;
-  requestId: RequestId;
-}
+import { ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
 
 export interface Response {
   requestId: RequestId;
@@ -37,23 +22,35 @@ declare global {
   interface RequestNameResponsePairs {}
 }
 
-export type ValidRequestName = keyof RequestNameMap;
-
+type ValidRequestName = keyof RequestNameMap;
 type PromiseResolver = (x: any) => void;
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+type ValidActorName = keyof ActorMessageType;
+export type RequestId = string;
+
 const waitingRequesters = new Map<RequestId, PromiseResolver>();
 
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+function generateUniqueRequestId(): RequestId {
+  return [...new Array(16)]
+    .map(() => Math.floor(Math.random() * 16).toString(16))
+    .join("");
+}
+
+export interface Request {
+  requester: string;
+  requestId: RequestId;
+}
 
 export function sendRequest<
   T extends ValidActorName,
   R extends ValidRequestName
 >(
   handle: ActorHandle<T>,
-  request: Omit<MessageBusType[T] & Request, "requestId">
+  request: Omit<ActorMessageType[T] & Request, "requestId">
 ): Promise<RequestNameResponsePairs[R]> {
   return new Promise(resolve => {
     const requestId = generateUniqueRequestId();
-    const augmentedRequest: MessageBusType[T] & Request = {
+    const augmentedRequest: ActorMessageType[T] & Request = {
       // @ts-ignore
       ...request,
       requestId
@@ -63,12 +60,18 @@ export function sendRequest<
   });
 }
 
-export function processResponse(msg: Response): boolean {
-  if (!waitingRequesters.has(msg.requestId)) {
+function isResponse(x: any): x is Response {
+  return "requestId" in x && waitingRequesters.has(x.requestId);
+}
+
+export function processResponse(msg: any): boolean {
+  if (!isResponse(msg)) {
     return false;
   }
-  const resolver = waitingRequesters.get(msg.requestId)!;
-  resolver(msg);
+  if (waitingRequesters.has(msg.requestId)) {
+    const resolver = waitingRequesters.get(msg.requestId)!;
+    resolver(msg);
+  }
   return true;
 }
 
@@ -77,14 +80,10 @@ export async function sendResponse<R extends ValidRequestName>(
   resp: Omit<RequestNameResponsePairs[R], "requestId">
 ) {
   // @ts-ignore
-  const actor = await lookup(req.requester);
+  const actor = lookup(req.requester);
   actor.send({
     // @ts-ignore
     ...resp,
     requestId: req.requestId
   });
-}
-
-export function isResponse(x: any): x is Response {
-  return "requestId" in x && waitingRequesters.has(x.requestId);
 }

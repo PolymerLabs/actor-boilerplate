@@ -18,7 +18,6 @@ import { h, render } from "preact";
 
 import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
 import {
-  isResponse,
   processResponse,
   sendRequest
 } from "../../../utils/request-response.js";
@@ -31,7 +30,7 @@ import {
 import { defaultState, State } from "../../state.js";
 
 declare global {
-  interface MessageBusType {
+  interface ActorMessageType {
     ui: Message;
   }
 }
@@ -40,36 +39,34 @@ export type Message = PublishMessage;
 
 export default class PreactAdapter extends Actor<Message> {
   private state: State = defaultState;
-  private stateActor?: ActorHandle<"state">;
-  private pubsubActor?: ActorHandle<"state.pubsub">;
+  private stateActor = lookup("state");
+  private pubsubActor = lookup("state.pubsub");
+  private mathActor = lookup("math");
   private lastResult?: number;
 
   async init() {
-    this.stateActor = await lookup("state");
-    this.pubsubActor = await lookup("state.pubsub");
     // Subscribe to state updates
-    this.pubsubActor!.send({
+    this.pubsubActor.send({
       actorName: "ui",
-      topic: "state",
       type: PubSubMessageType.SUBSCRIBE
     });
   }
 
   async doMath() {
-    const math = await lookup("math");
-    const response = await sendRequest(math, {
+    const response = await sendRequest(this.mathActor, {
       a: 40,
       b: 2 * Math.random(),
       requester: "ui",
-      type: MathMessageType.DO_MATH
+      type: MathMessageType.ADDITION
     });
     this.lastResult = response.result;
   }
 
   async onMessage(msg: Message) {
-    if (isResponse(msg) && processResponse(msg)) {
+    if (processResponse(msg)) {
       return;
     }
+
     this.state = applyPatches(this.state, msg.payload as any);
 
     render(

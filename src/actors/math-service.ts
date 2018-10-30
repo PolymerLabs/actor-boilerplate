@@ -16,14 +16,14 @@ import { Actor } from "westend-helpers/src/actor/Actor.js";
 import { Request, Response, sendResponse } from "../utils/request-response.js";
 
 declare global {
-  interface MessageBusType {
+  interface ActorMessageType {
     math: Message;
   }
 }
 
 declare global {
   interface RequestNameMap {
-    DoMathRequest: DoMathRequest;
+    DoMathRequest: AdditionRequest;
   }
   interface RequestNameResponsePairs {
     DoMathRequest: ResultResponse;
@@ -31,12 +31,12 @@ declare global {
 }
 
 export enum MessageType {
-  DO_MATH,
+  ADDITION,
   RESULT
 }
 
-export type DoMathRequest = {
-  type: MessageType.DO_MATH;
+export type AdditionRequest = {
+  type: MessageType.ADDITION;
   a: number;
   b: number;
 } & Request;
@@ -46,10 +46,14 @@ export type ResultResponse = {
   result: number;
 } & Response;
 
-export type Message = DoMathRequest;
+export type Message = AdditionRequest;
 
 export default class MathService extends Actor<Message> {
   async onMessage(msg: Message) {
+    this[msg.type](msg);
+  }
+
+  [MessageType.ADDITION](msg: AdditionRequest) {
     sendResponse(msg, {
       result: msg.a + msg.b,
       type: MessageType.RESULT
