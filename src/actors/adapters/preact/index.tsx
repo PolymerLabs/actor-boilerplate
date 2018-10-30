@@ -12,22 +12,25 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { applyPatches } from "immer";
+import { applyPatches, Patch } from "immer";
 
 import { h, render } from "preact";
 
-import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
+import { Actor, lookup } from "westend-helpers/src/actor/Actor.js";
 import {
   processResponse,
   sendRequest
 } from "../../../utils/request-response.js";
-import { MessageType as MathMessageType } from "../../math-service.js";
 
 import {
   MessageType as PubSubMessageType,
   PublishMessage
 } from "../../pubsub.js";
-import { defaultState, State } from "../../state.js";
+import {
+  defaultState,
+  MessageType as StateMessageType,
+  State
+} from "../../state.js";
 
 declare global {
   interface ActorMessageType {
@@ -41,39 +44,56 @@ export default class PreactAdapter extends Actor<Message> {
   private state: State = defaultState;
   private stateActor = lookup("state");
   private pubsubActor = lookup("state.pubsub");
-  private mathActor = lookup("math");
-  private lastResult?: number;
 
   async init() {
     // Subscribe to state updates
     this.pubsubActor.send({
-      actorName: "ui",
+      actorName: this.actorName!,
       type: PubSubMessageType.SUBSCRIBE
     });
-  }
 
-  async doMath() {
-    const response = await sendRequest(this.mathActor, {
-      a: 40,
-      b: 2 * Math.random(),
-      requester: "ui",
-      type: MathMessageType.ADDITION
-    });
-    this.lastResult = response.result;
+    (async () => {
+      const response = await sendRequest(this.stateActor, {
+        requester: this.actorName!,
+        type: StateMessageType.REQUEST_STATE
+      });
+      this.state = response.state;
+      this.render(this.state);
+    })();
   }
 
   async onMessage(msg: Message) {
     if (processResponse(msg)) {
       return;
     }
+    // @ts-ignore
+    this[msg.type](msg);
+  }
 
-    this.state = applyPatches(this.state, msg.payload as any);
+  [PubSubMessageType.PUBLISH](msg: PublishMessage) {
+    this.state = applyPatches(this.state, msg.payload as Patch[]);
+    this.render(this.state);
+  }
 
+  private render(state: State) {
     render(
       <main>
-        <h1>Hai</h1>
-        <button onClick={() => this.doMath()}>Do Math!</button>
-        <div>Last result: {this.lastResult || "No result yet"}</div>
+        {state.items.map(item => (
+          <label data-uid={item.uid}>
+            <input type="checkbox" checked={item.done} />
+            <input type="text" value={item.title} />
+          </label>
+        ))}
+        <button
+          onClick={() =>
+            this.stateActor.send({
+              title: "Give me a text!",
+              type: StateMessageType.CREATE_TODO
+            })
+          }
+        >
+          =
+        </button>
       </main>,
       document.body,
       document.body.firstChild as any

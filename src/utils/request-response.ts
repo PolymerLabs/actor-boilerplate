@@ -30,7 +30,7 @@ export type RequestId = string;
 
 const waitingRequesters = new Map<RequestId, PromiseResolver>();
 
-function generateUniqueRequestId(): RequestId {
+export function generateUniqueId(): RequestId {
   return [...new Array(16)]
     .map(() => Math.floor(Math.random() * 16).toString(16))
     .join("");
@@ -49,7 +49,7 @@ export function sendRequest<
   request: Omit<ActorMessageType[T] & Request, "requestId">
 ): Promise<RequestNameResponsePairs[R]> {
   return new Promise(resolve => {
-    const requestId = generateUniqueRequestId();
+    const requestId = generateUniqueId();
     const augmentedRequest: ActorMessageType[T] & Request = {
       // @ts-ignore
       ...request,

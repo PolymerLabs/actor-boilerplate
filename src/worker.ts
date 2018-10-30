@@ -14,10 +14,8 @@
 
 import { hookup } from "westend-helpers/src/actor/Actor.js";
 
-import MathService from "./actors/math-service.js";
 import PubSubActor from "./actors/pubsub.js";
 import StateActor from "./actors/state.js";
 
 hookup("state", new StateActor());
 hookup("state.pubsub", new PubSubActor());
-hookup("math", new MathService());

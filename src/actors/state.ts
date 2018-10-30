@@ -12,9 +12,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { produce } from "immer";
+import { Patch, produce } from "immer";
 
-import { Actor, ActorHandle, lookup } from "westend-helpers/src/actor/Actor.js";
+import { Actor, lookup } from "westend-helpers/src/actor/Actor.js";
+import {
+  generateUniqueId,
+  Request,
+  Response,
+  sendResponse
+} from "../utils/request-response.js";
 import {
   Message as PubSubMessage,
   MessageType as PubSubMessageType
@@ -27,12 +33,19 @@ declare global {
     state: Message;
     "state.pubsub": PubSubMessage;
   }
+  interface RequestNameMap {
+    RequestStateMessage: RequestStateMessage;
+  }
+  interface RequestNameResponsePairs {
+    RequestStateMessage: StateMessage;
+  }
 }
 
-enum MessageType {
+export enum MessageType {
   CREATE_TODO,
   DELETE_TODO,
-  TOGGLE_TODO
+  TOGGLE_TODO,
+  REQUEST_STATE
 }
 
 export interface CreateMessage {
@@ -50,27 +63,66 @@ export interface ToggleMessage {
   uid: string;
 }
 
-export type Message = CreateMessage | DeleteMessage | ToggleMessage;
+export type RequestStateMessage = {
+  type: MessageType.REQUEST_STATE;
+} & Request;
 
-export type State = Todo[];
+export type StateMessage = {
+  state: State;
+} & Response;
 
-export const defaultState = [];
+export type Message =
+  | CreateMessage
+  | DeleteMessage
+  | ToggleMessage
+  | RequestStateMessage;
+
+export interface State {
+  items: Todo[];
+}
+
+export const defaultState: State = {
+  items: []
+};
 
 export default class StateActor extends Actor<Message> {
-  private statePubSub = lookup("state.pubsub");
-  private state: State = [];
-
-  async init() {
-    setInterval(() => {
-      this.statePubSub.send({
-        payload: [],
-        sourceActorName: "state",
-        type: PubSubMessageType.PUBLISH
-      });
-    }, 1000);
-  }
+  private pubsub = lookup("state.pubsub");
+  private state: State = defaultState;
 
   async onMessage(msg: Message) {
-    // Nothing for now.
+    // @ts-ignore
+    this[msg.type](msg);
+  }
+
+  async [MessageType.CREATE_TODO](msg: CreateMessage) {
+    this.state = produce<State>(
+      this.state,
+      draft => {
+        draft.items.push({
+          done: false,
+          title: msg.title,
+          uid: generateUniqueId()
+        });
+      },
+      (patches: Patch[]) =>
+        this.pubsub.send({
+          payload: patches,
+          type: PubSubMessageType.PUBLISH
+        })
+    );
+  }
+
+  async [MessageType.DELETE_TODO](msg: DeleteMessage) {
+    // TODO
+  }
+
+  async [MessageType.REQUEST_STATE](msg: RequestStateMessage) {
+    sendResponse(msg, {
+      state: this.state
+    });
+  }
+
+  async [MessageType.TOGGLE_TODO](msg: ToggleMessage) {
+    // TODO
   }
 }

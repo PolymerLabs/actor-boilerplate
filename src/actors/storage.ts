@@ -23,6 +23,7 @@ declare global {
     storage: Message;
   }
 }
+
 export enum MessageType {
   SAVE,
   LOAD,
