@@ -12,11 +12,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "westend-helpers/src/actor/Actor.js";
+import { hookup, initializeQueues } from "westend-helpers/src/actor/Actor.js";
 
 import PreactAdapter from "./actors/adapters/preact";
 
-hookup("ui", new PreactAdapter());
+async function bootstrap() {
+  await initializeQueues();
+  hookup("ui", new PreactAdapter());
 
-// tslint:disable-next-line:no-unused-expression This spawns a worker.
-new Worker("worker.js");
+  // tslint:disable-next-line:no-unused-expression This spawns a worker.
+  new Worker("worker.js");
+}
+bootstrap();
