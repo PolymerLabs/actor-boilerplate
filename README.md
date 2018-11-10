@@ -67,6 +67,8 @@ For example, if you have one actor that performs very expensive tasks, such as e
 
 License BSD-3-clause
 
+Please note: this is not a Google product.
+
 [actor-helpers]: https://github.com/PolymerLabs/actor-helpers
 [actor.ts]: https://github.com/PolymerLabs/actor-helpers/blob/master/src/actor/Actor.ts
 [download]: https://github.com/PolymerLabs/actor-boilerplate/archive/master.zip
