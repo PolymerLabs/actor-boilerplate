@@ -2,6 +2,10 @@
 
 A starting point for web apps based on the actor model.
 
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/617438/48304411-026e9e80-e4ce-11e8-86b9-250c9566e2bb.png" alt="Screenshot of a stopwatch web app that uses the Actor model">
+</p>
+
 ## Chrome Dev Summit Talk
 
 _(video not yet uploaded)_
