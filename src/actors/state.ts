@@ -1,64 +1,79 @@
-/**
- * @license
- * Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at
- * http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at
- * http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at
- * http://polymer.github.io/PATENTS.txt
- */
+import { Actor, lookup } from "actor-helpers/lib/actor/Actor.js";
 
-import { Actor, lookup } from "actor-helpers/src/actor/Actor.js";
+import { AppState } from "../model/state.js";
+import { View, ViewType } from "../model/view.js";
+import { loadSubreddit, loadThread } from "../model/loading.js";
 
-declare global {
-  interface ActorMessageType {
-    state: Message;
+export enum ActionType {
+  NAVIGATION,
+  COUNTING
+}
+export interface CountAction {
+  counter: number;
+  type: ActionType.COUNTING;
+}
+
+export interface NavigationAction {
+  path: string;
+  pathType: ViewType;
+  type: ActionType.NAVIGATION;
+}
+
+export type Action = NavigationAction | CountAction;
+
+const initialState: AppState = {
+  stack: [],
+  path: "/r/all"
+};
+
+export class StateActor extends Actor<Action> {
+  private state = initialState;
+  private uiActor = lookup("ui");
+
+  async init() {
+    this.sendState();
   }
-}
 
-export interface State {
-  count: number;
-}
+  private sendState() {
+    this.uiActor.send(this.state);
+  }
 
-export enum MessageType {
-  INCREMENT,
-  DECREMENT
-}
-
-export interface IncrementMessage {
-  type: MessageType.INCREMENT;
-}
-
-export interface DecrementMessage {
-  type: MessageType.DECREMENT;
-}
-
-export type Message = IncrementMessage | DecrementMessage;
-
-export default class StateActor extends Actor<Message> {
-  private ui = lookup("ui");
-  private state: State = {
-    count: 0
-  };
-
-  async onMessage(msg: Message) {
-    switch (msg.type) {
-      case MessageType.INCREMENT:
-        this.state.count += 1;
-        break;
-      case MessageType.DECREMENT:
-        this.state.count -= 1;
-        if (this.state.count <= 0) {
-          this.state.count = 0;
-        }
-        break;
-    }
-    this.ui.send({
-      state: this.state
+  onMessage(action: Action) {
+    // @ts-ignore
+    this[action.type](action).then(() => {
+      this.sendState();
     });
   }
+
+  async [ActionType.NAVIGATION]({ path, pathType }: NavigationAction) {
+    let view: View;
+
+    if (pathType === ViewType.SUBREDDIT) {
+      view = {
+        type: pathType,
+        subreddit: await loadSubreddit(path.substr(3))
+      };
+    } else if (pathType === ViewType.THREAD) {
+      const [thread, comments] = await loadThread(path.substr(3));
+
+      view = {
+        type: pathType,
+        thread,
+        comments
+      };
+    } else {
+      throw new Error(`Invalid path type ${pathType}`);
+    }
+
+    this.state = {
+      ...this.state,
+      stack: [
+        ...this.state.stack,
+        view
+      ],
+      path
+    };
+  }
+
+  async [ActionType.COUNTING](message: CountAction) {}
 }

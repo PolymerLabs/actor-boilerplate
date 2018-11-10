@@ -12,29 +12,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
-
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
-
-import { RouterActor } from "./actors/router.js";
-
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
-
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
-  }
+interface Event {
+  composedPath: () => HTMLElement[];
 }
 
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
+interface Constructor<T> {
+  new (...args: any[]): T;
 }
-
-bootstrap();

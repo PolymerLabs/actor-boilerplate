@@ -12,29 +12,27 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
+export {
+  getFavorites,
+  addFavorite,
+  delFavorite,
+  toggleFavorite
+} from "./favorites.js";
+export {
+  loadSubreddit,
+  loadThread,
+  refreshThread,
+  refreshSubreddit,
+  cacheDate
+} from "./loading.js";
 
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
+import * as ServiceReady from "westend/utils/service-ready.js";
+import { init as loadingInit } from "./loading.js";
 
-import { RouterActor } from "./actors/router.js";
+export const READY_CHANNEL = "model.ready";
 
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
+export async function init() {
+  await loadingInit();
 
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
-  }
+  ServiceReady.signal(READY_CHANNEL);
 }
-
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
-}
-
-bootstrap();

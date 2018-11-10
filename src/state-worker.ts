@@ -13,28 +13,18 @@
  */
 
 import { hookup } from "actor-helpers/lib/actor/Actor.js";
-
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
-
-import { RouterActor } from "./actors/router.js";
-
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
+import { Action, StateActor } from "./actors/state.js";
 
 declare global {
   interface ActorMessageType {
-    ui: AppState;
-    router: never;
+    state: Action;
   }
 }
 
-new Worker("state-worker.js", { type: "module" });
-
 async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
+  hookup("state", new StateActor());
 }
+
+onmessage = () => {};
 
 bootstrap();

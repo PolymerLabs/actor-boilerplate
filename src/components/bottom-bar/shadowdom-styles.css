@@ -12,29 +12,26 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
+:host {
+  height: 100vh;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  position: fixed;
+  bottom: -100vh;
+  will-change: transform;
+  z-index: 9;
 
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
-
-import { RouterActor } from "./actors/router.js";
-
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
-
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
-  }
+  display: flex;
+  flex-direction: column;
 }
 
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
+slot[name="bar"]::slotted(*) {
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
-bootstrap();
+slot:not([name="bar"])::slotted(*) {
+  flex-shrink: 1;
+  flex-grow: 1;
+}

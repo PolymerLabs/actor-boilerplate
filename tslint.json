@@ -12,9 +12,7 @@
     "trailing-comma": false,
     "member-access": [true, "no-public"],
     "callable-types": false,
-    "no-empty-interface": false,
-    "only-arrow-functions": false,
-    "variable-name": [true, "allow-leading-underscore"]
+    "only-arrow-functions": false
   },
   "rulesDirectory": [],
   "linterOptions": {

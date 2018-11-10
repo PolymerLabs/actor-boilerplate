@@ -1,0 +1,65 @@
+/**
+ * @license
+ * Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at
+ * http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at
+ * http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+ :root {
+  --base: 4px;
+  --padding: 2;
+  --base-font: 3.5;
+  --small-font: calc(var(--base-font) * 0.8);
+  --big-font: calc(var(--base-font) * 1.3);
+  --opacity-step: 0.77;
+  --primary-dd: #003434;
+  --primary-d: #006767;
+  --primary: #009b9b;
+  --primary-b: #001e1e;
+  --primary-w: #e0ffff;
+  --primary-wt: #e0ffff40; /* Meh */
+  --secondary1-dd: #564700;
+  --secondary1-d: #aa8c00;
+  --secondary1: #ffd100;
+  --secondary1-b: #1e1900;
+  --secondary1-w: #fff9e0;
+  --secondary2-dd: #460027;
+  --secondary2-d: #8a004d;
+  --secondary2: #ce0074;
+  --secondary2-b: #1e0011;
+  --secondary2-w: #ffe0f1;
+}
+:root {
+  --sqrt2: 1.4142;
+}
+html, body {
+  margin: 0;
+}
+html {
+  background-color: var(--secondary1);
+}
+body {
+  background-color: var(--primary-b);
+  color: var(--primary-w);
+  font-family: Helvetica;
+  font-size: calc(var(--base) * var(--base-font));
+  line-height: 1.2;
+}
+a {
+  color: var(--secondary1);
+  text-decoration: none;
+}
+::selection {
+  background: var(--secondary2);
+  color: var(--secondary2-w);
+}
+.invisible {
+  visibility: hidden;
+}

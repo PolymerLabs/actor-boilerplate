@@ -12,8 +12,28 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/src/actor/Actor.js";
+import { Comment } from "./comment.js";
+import { Subreddit } from "./subreddit.js";
+import { Thread } from "./thread.js";
 
-import StateActor from "./actors/state.js";
+export interface ViewBase {
+  type: ViewType;
+}
 
-hookup("state", new StateActor());
+export enum ViewType {
+  SUBREDDIT,
+  THREAD
+}
+
+export interface SubredditView extends ViewBase {
+  type: ViewType.SUBREDDIT;
+  subreddit: Subreddit;
+}
+
+export interface ThreadView extends ViewBase {
+  type: ViewType.THREAD;
+  thread: Thread;
+  comments: Comment[];
+}
+
+export type View = SubredditView | ThreadView;

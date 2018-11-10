@@ -12,29 +12,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
+import { Thread } from "./thread.js";
 
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
-
-import { RouterActor } from "./actors/router.js";
-
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
-
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
-  }
+export type SubredditID = string;
+export interface Subreddit {
+  cachedAt: number;
+  id: SubredditID;
+  items: Thread[];
 }
-
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
-}
-
-bootstrap();

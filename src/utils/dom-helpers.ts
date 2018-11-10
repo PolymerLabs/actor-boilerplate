@@ -12,29 +12,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
+// TODO (@surma): Does this need to be more complete?
+// Like https://dev.w3.org/html5/html-author/charref
+const entities = new Map<RegExp, string>([
+  [/&amp;/gi, "&"],
+  [/&lt;/gi, "<"],
+  [/&gt;/gi, ">"],
+  [/&quot;/gi, '"']
+]);
 
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
-
-import { RouterActor } from "./actors/router.js";
-
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
-
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
+export function decodeHTML(input: string): string {
+  for (const [pattern, replacement] of entities.entries()) {
+    input = input.replace(pattern, replacement);
   }
+  return input;
 }
-
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
-}
-
-bootstrap();

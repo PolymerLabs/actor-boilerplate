@@ -12,29 +12,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup } from "actor-helpers/lib/actor/Actor.js";
+import CleanCSS from "clean-css";
 
-import { UIActor } from "./actors/ui.js";
-import { AppState } from "./model/state.js";
+export default function() {
+  const cssMinifier = new CleanCSS();
 
-import { RouterActor } from "./actors/router.js";
+  return {
+    name: "css",
 
-declare var Worker: {
-  new (url: URL | string, options?: { type: string }): Worker;
-};
-
-declare global {
-  interface ActorMessageType {
-    ui: AppState;
-    router: never;
-  }
+    transform(code, id) {
+      if (!id.endsWith(".css")) {
+        return;
+      }
+      code = cssMinifier.minify(code).styles;
+      return `export default ${JSON.stringify(code)};`;
+    }
+  };
 }
-
-new Worker("state-worker.js", { type: "module" });
-
-async function bootstrap() {
-  hookup("ui", new UIActor());
-  hookup("router", new RouterActor());
-}
-
-bootstrap();
