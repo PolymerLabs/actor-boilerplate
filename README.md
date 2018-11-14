@@ -6,9 +6,8 @@ A starting point for web apps based on the actor model.
   <img src="https://user-images.githubusercontent.com/617438/48304411-026e9e80-e4ce-11e8-86b9-250c9566e2bb.png" alt="Screenshot of a stopwatch web app that uses the Actor model">
 </p>
 
-## Chrome Dev Summit Talk
-
-_(video not yet uploaded)_
+## Chrome Dev Summit 2018 Talk
+[Architecting Web Apps - Lights, Camera, Action!](https://www.youtube.com/watch?v=Vg60lf92EkM&list=PLNYkxOF6rcIDjlCx1PcphPpmf43aKOAdF&index=17&t=0s)
 
 We also wrote a series of blog posts with more detail on web development with the actor model:
 
