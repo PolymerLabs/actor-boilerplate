@@ -20,7 +20,10 @@ async function bootstrap() {
   await initializeQueues();
   hookup("ui", new UiActor());
 
-  // tslint:disable-next-line:no-unused-expression This spawns a worker.
-  new Worker("worker.js");
+  const worker = new Worker("worker.js");
+  // This is necessary in Safari to keep the worker alive.
+  setInterval(() => {
+    worker.postMessage("");
+  }, 3000);
 }
 bootstrap();
