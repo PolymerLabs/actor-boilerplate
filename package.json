@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "A starting point for web apps based on the actor model",
   "scripts": {
-    "copy-static": "cpx 'static/**' dist",
+    "copy-static": "cpx static/** dist",
     "gzip": "gzip -k9nr dist",
     "build": "rollup -c && npm run copy-static && npm run gzip",
     "serve": "http-server dist -c0 -g"
