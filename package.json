@@ -21,7 +21,7 @@
     "actor-helpers": "git+https://github.com/PolymerLabs/actor-helpers.git#master"
   },
   "scripts": {
-    "copy-static": "cpx 'static/**/*' dist/",
+    "copy-static": "cpx static/** dist/",
     "build": "rollup -c && npm run copy-static",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "format": "cd ../../ && npm run format",
