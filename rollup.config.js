@@ -7,7 +7,7 @@ import loadz0r from "rollup-plugin-loadz0r";
 require("rimraf").sync("dist");
 
 export default {
-  input: ["src/bootstrap.ts", "src/worker.ts"],
+  input: ["src/bootstrap.ts", "src/worker.ts", "src/service-worker.ts"],
   output: {
     dir: "dist",
     format: "amd",

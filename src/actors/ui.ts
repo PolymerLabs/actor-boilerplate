@@ -15,6 +15,7 @@
 import { Actor, lookup } from "actor-helpers/src/actor/Actor.js";
 
 import { State, MessageType as StateMessageType } from "./state.js";
+import { MessageType as FetchMessageType } from "./fetch.js";
 
 declare global {
   interface ActorMessageType {
@@ -30,6 +31,7 @@ export type Message = StateMessage;
 
 export default class UiActor extends Actor<Message> {
   private state = lookup("state");
+  private fetch = lookup("fetch");
   private counterEl = document.getElementById("counter") as HTMLSpanElement;
 
   async init() {
@@ -47,6 +49,14 @@ export default class UiActor extends Actor<Message> {
     decrButton.onclick = () =>
       this.state.send({
         type: StateMessageType.DECREMENT
+      });
+
+    const fetchcrButton = document.getElementById(
+      "fetchcrement"
+    ) as HTMLButtonElement;
+    fetchcrButton.onclick = () =>
+      this.fetch.send({
+        type: FetchMessageType.FETCHCREMENT
       });
   }
 

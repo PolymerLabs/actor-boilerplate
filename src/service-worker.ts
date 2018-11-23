@@ -12,20 +12,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hookup, initializeQueues } from "actor-helpers/src/actor/Actor.js";
+import { hookup } from "actor-helpers/src/actor/Actor.js";
 
-import UiActor from "./actors/ui.js";
+import FetchActor from "./actors/fetch.js";
 
-async function bootstrap() {
-  await initializeQueues();
-  hookup("ui", new UiActor());
-
-  const worker = new Worker("worker.js");
-  // This is necessary in Safari to keep the worker alive.
-  setInterval(() => {
-    worker.postMessage("");
-  }, 3000);
-
-  navigator.serviceWorker.register('/service-worker.js');
-}
-bootstrap();
+hookup("fetch", new FetchActor());
